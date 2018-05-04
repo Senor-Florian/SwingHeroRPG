@@ -6,6 +6,7 @@ import heroes.Hero;
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.HashMap;
 
 public class EndTurn implements ActionListener {
     private JFrame frame;
@@ -38,42 +39,52 @@ public class EndTurn implements ActionListener {
         this.player2Wins = player2Wins;
     }
 
-    void setPanel(JPanel panel) {
+    private void setPanel(JPanel panel) {
         HeroRPG.heroRPG.frame.setContentPane(panel);
         HeroRPG.heroRPG.frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         HeroRPG.heroRPG.frame.pack();
         HeroRPG.heroRPG.frame.setVisible(true);
     }
 
-    void resetHeroStats() {
-        HeroRPG.hero1.setHealth((float)HeroRPG.hero1Stats.get("health"));
-        HeroRPG.hero1.setOffensiveRating((float)HeroRPG.hero1Stats.get("offensiveRating"));
-        HeroRPG.hero1.setDefensiveRating((float)HeroRPG.hero1Stats.get("defensiveRating"));
-        HeroRPG.hero1.setStartAP((int)HeroRPG.hero1Stats.get("startAP"));
-        HeroRPG.hero1.setTurnAP((int)HeroRPG.hero1Stats.get("turnAP"));
-        HeroRPG.hero1.setCriticalChance((float)HeroRPG.hero1Stats.get("criticalChance"));
-        HeroRPG.hero1.setDamageModifier((float)HeroRPG.hero1Stats.get("damageModifier"));
-        HeroRPG.hero1.setCurrentAP((int)HeroRPG.hero1Stats.get("currentAP"));
-        HeroRPG.hero1.setSpellCooldown((int)HeroRPG.hero1Stats.get("spellCooldown"));
-
-        HeroRPG.hero2.setHealth((float)HeroRPG.hero2Stats.get("health"));
-        HeroRPG.hero2.setOffensiveRating((float)HeroRPG.hero2Stats.get("offensiveRating"));
-        HeroRPG.hero2.setDefensiveRating((float)HeroRPG.hero2Stats.get("defensiveRating"));
-        HeroRPG.hero2.setStartAP((int)HeroRPG.hero2Stats.get("startAP"));
-        HeroRPG.hero2.setTurnAP((int)HeroRPG.hero2Stats.get("turnAP"));
-        HeroRPG.hero2.setCriticalChance((float)HeroRPG.hero2Stats.get("criticalChance"));
-        HeroRPG.hero2.setDamageModifier((float)HeroRPG.hero2Stats.get("damageModifier"));
-        HeroRPG.hero2.setCurrentAP((int)HeroRPG.hero2Stats.get("currentAP"));
-        HeroRPG.hero2.setSpellCooldown((int)HeroRPG.hero2Stats.get("spellCooldown"));
+    private void resetHeroStats(Hero hero, HashMap<String, Object> heroStats) {
+        hero.setHealth((float)heroStats.get("health"));
+        hero.setOffensiveRating((float)heroStats.get("offensiveRating"));
+        hero.setDefensiveRating((float)heroStats.get("defensiveRating"));
+        hero.setStartAP((int)heroStats.get("startAP"));
+        hero.setTurnAP((int)heroStats.get("turnAP"));
+        hero.setCriticalChance((float)heroStats.get("criticalChance"));
+        hero.setDamageModifier((float)heroStats.get("damageModifier"));
+        hero.setCurrentAP((int)heroStats.get("currentAP"));
+        hero.setSpellCooldown((int)heroStats.get("spellCooldown"));
     }
 
-    void resetBattleInterface() {
+    private void resetBattleInterface() {
         player1Name.setText(HeroRPG.hero1.getName());
         player2Name.setText(HeroRPG.hero2.getName());
         player1Health.setText(HeroRPG.hero1.getHealth() + " HP");
         player2Health.setText(HeroRPG.hero2.getHealth() + " HP");
         player1AP.setText(HeroRPG.hero1.getCurrentAP() + " AP");
         player2AP.setText(HeroRPG.hero2.getCurrentAP() + " AP");
+    }
+
+    private int endTurn(Hero heroA, Hero heroB, int heroWins, JLabel playerWins) {
+        if(heroA.getHealth() <= 0) {
+            battleLog.setText(heroB.getName() + " won the round");
+            JOptionPane.showMessageDialog(frame, heroA.getName() + " died!");
+            heroWins++;
+            if(heroWins == 3) {
+                result.setText(heroB.getName() + (HeroRPG.player == HeroRPG.Player.PLAYER1 ?
+                        " controlled by Player 1 won the game!" : " controlled by Player 2 won the game!"));
+                setPanel(HeroRPG.heroRPG.end);
+            } else {
+                resetHeroStats(HeroRPG.hero1, HeroRPG.hero1Stats);
+                resetHeroStats(HeroRPG.hero2, HeroRPG.hero2Stats);
+                playerWins.setText("Rounds won: " + heroWins);
+                resetBattleInterface();
+                setPanel(HeroRPG.heroRPG.battle);
+            }
+        }
+        return heroWins;
     }
 
     @Override
@@ -84,34 +95,8 @@ public class EndTurn implements ActionListener {
                 HeroRPG.hero1.setSpellCooldown(HeroRPG.hero1.getSpellCooldown() - 1);
             }
             player1AP.setText(HeroRPG.hero1.getCurrentAP() + " AP");
-            if(HeroRPG.hero1.getHealth() <= 0) {
-                battleLog.setText(HeroRPG.hero2.getName() + " won the round");
-                JOptionPane.showMessageDialog(frame, HeroRPG.hero1.getName() + " died!");
-                HeroRPG.hero2Wins++;
-                if(HeroRPG.hero2Wins == 3) {
-                    result.setText(HeroRPG.hero2.getName() + " controlled by Player 2 won the game!");
-                    setPanel(HeroRPG.heroRPG.end);
-                } else {
-                    resetHeroStats();
-                    player2Wins.setText("Rounds won: " + HeroRPG.hero2Wins);
-                    resetBattleInterface();
-                    setPanel(HeroRPG.heroRPG.battle);
-                }
-            }
-            if(HeroRPG.hero2.getHealth() <= 0) {
-                battleLog.setText(HeroRPG.hero1.getName() + " won the round");
-                JOptionPane.showMessageDialog(frame, HeroRPG.hero2.getName() + " died!");
-                HeroRPG.hero1Wins++;
-                if(HeroRPG.hero1Wins == 3) {
-                    result.setText(HeroRPG.hero1.getName() + " controlled by Player 1 won the game!");
-                    setPanel(HeroRPG.heroRPG.end);
-                } else {
-                    resetHeroStats();
-                    player1Wins.setText("Rounds won: " + HeroRPG.hero1Wins);
-                    resetBattleInterface();
-                    setPanel(HeroRPG.heroRPG.battle);
-                }
-            }
+            HeroRPG.hero2Wins = endTurn(HeroRPG.hero1, HeroRPG.hero2, HeroRPG.hero2Wins, player2Wins);
+            HeroRPG.hero1Wins = endTurn(HeroRPG.hero2, HeroRPG.hero1, HeroRPG.hero1Wins, player1Wins);
             whosTurn.setText(HeroRPG.hero2.getName() + "'s turn");
             HeroRPG.player = HeroRPG.Player.PLAYER2;
         } else {
@@ -120,34 +105,8 @@ public class EndTurn implements ActionListener {
                 HeroRPG.hero2.setSpellCooldown(HeroRPG.hero2.getSpellCooldown() - 1);
             }
             player2AP.setText(HeroRPG.hero2.getCurrentAP() + " AP");
-            if(HeroRPG.hero1.getHealth() <= 0) {
-                battleLog.setText(HeroRPG.hero2.getName() + " won the round");
-                JOptionPane.showMessageDialog(frame, HeroRPG.hero1.getName() + " died!");
-                HeroRPG.hero2Wins++;
-                if(HeroRPG.hero2Wins == 3) {
-                    result.setText(HeroRPG.hero2.getName() + " controlled by Player 2 won the game!");
-                    setPanel(HeroRPG.heroRPG.end);
-                } else {
-                    resetHeroStats();
-                    player2Wins.setText("Rounds won: " + HeroRPG.hero2Wins);
-                    resetBattleInterface();
-                    setPanel(HeroRPG.heroRPG.battle);
-                }
-            }
-            if(HeroRPG.hero2.getHealth() <= 0) {
-                battleLog.setText(HeroRPG.hero1.getName() + " won the round");
-                JOptionPane.showMessageDialog(frame, HeroRPG.hero2.getName() + " died!");
-                HeroRPG.hero1Wins++;
-                if(HeroRPG.hero1Wins == 3) {
-                    result.setText(HeroRPG.hero1.getName() + " controlled by Player 1 won the game!");
-                    setPanel(HeroRPG.heroRPG.end);
-                } else {
-                    resetHeroStats();
-                    player1Wins.setText("Rounds won: " + HeroRPG.hero1Wins);
-                    resetBattleInterface();
-                    setPanel(HeroRPG.heroRPG.battle);
-                }
-            }
+            HeroRPG.hero2Wins = endTurn(HeroRPG.hero1, HeroRPG.hero2, HeroRPG.hero2Wins, player2Wins);
+            HeroRPG.hero1Wins = endTurn(HeroRPG.hero2, HeroRPG.hero1, HeroRPG.hero1Wins, player1Wins);
             whosTurn.setText(HeroRPG.hero1.getName() + "' turn");
             HeroRPG.player = HeroRPG.Player.PLAYER1;
         }

@@ -14,6 +14,7 @@ import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.util.HashMap;
 
 public class CreateCharacter implements ActionListener {
     private JFrame frame;
@@ -68,31 +69,19 @@ public class CreateCharacter implements ActionListener {
         this.player2Pic = player2Pic;
     }
 
-    public void storeStats(Hero hero) {
-        if(HeroRPG.player == HeroRPG.Player.PLAYER1) {
-            HeroRPG.hero1Stats.put("health", hero.getHealth());
-            HeroRPG.hero1Stats.put("offensiveRating", hero.getOffensiveRating());
-            HeroRPG.hero1Stats.put("defensiveRating", hero.getDefensiveRating());
-            HeroRPG.hero1Stats.put("startAP", hero.getStartAP());
-            HeroRPG.hero1Stats.put("turnAP", hero.getTurnAP());
-            HeroRPG.hero1Stats.put("criticalChance", hero.getCriticalChance());
-            HeroRPG.hero1Stats.put("damageModifier", hero.getDamageModifier());
-            HeroRPG.hero1Stats.put("currentAP", hero.getStartAP());
-            HeroRPG.hero1Stats.put("spellCooldown", 0);
-        } else {
-            HeroRPG.hero2Stats.put("health", hero.getHealth());
-            HeroRPG.hero2Stats.put("offensiveRating", hero.getOffensiveRating());
-            HeroRPG.hero2Stats.put("defensiveRating", hero.getDefensiveRating());
-            HeroRPG.hero2Stats.put("startAP", hero.getStartAP());
-            HeroRPG.hero2Stats.put("turnAP", hero.getTurnAP());
-            HeroRPG.hero2Stats.put("criticalChance", hero.getCriticalChance());
-            HeroRPG.hero2Stats.put("damageModifier", hero.getDamageModifier());
-            HeroRPG.hero2Stats.put("currentAP", hero.getStartAP());
-            HeroRPG.hero2Stats.put("spellCooldown", 0);
-        }
+    private void storeStats(Hero hero, HashMap<String, Object> heroStats) {
+        heroStats.put("health", hero.getHealth());
+        heroStats.put("offensiveRating", hero.getOffensiveRating());
+        heroStats.put("defensiveRating", hero.getDefensiveRating());
+        heroStats.put("startAP", hero.getStartAP());
+        heroStats.put("turnAP", hero.getTurnAP());
+        heroStats.put("criticalChance", hero.getCriticalChance());
+        heroStats.put("damageModifier", hero.getDamageModifier());
+        heroStats.put("currentAP", hero.getStartAP());
+        heroStats.put("spellCooldown", 0);
     }
 
-    public void setAvatar(JLabel label, String path) {
+    private void setAvatar(JLabel label, String path) {
         ClassLoader classLoader = getClass().getClassLoader();
         BufferedImage image = null;
         try {
@@ -104,74 +93,80 @@ public class CreateCharacter implements ActionListener {
         label.setIcon(icon);
     }
 
+    private void instantiateHero() {
+        Hero hero;
+        boolean whichPlayer = HeroRPG.player == HeroRPG.Player.PLAYER1;
+        if(warrior.isSelected()) {
+            hero = new Warrior(nameField.getText(), Integer.parseInt(strengthNumber.getText()), Integer.parseInt(dexterityNumber.getText()),
+                    Integer.parseInt(intelligenceNumber.getText()), Integer.parseInt(constitutionNumber.getText()),
+                    Integer.parseInt(speedNumber.getText()), Integer.parseInt(perceptionNumber.getText()));
+                    setAvatar(whichPlayer ? player1Pic : player2Pic, whichPlayer ? "./assets/sword1.png" : "./assets/sword2.png");
+        } else if(mage.isSelected()) {
+            hero = new Mage(nameField.getText(), Integer.parseInt(strengthNumber.getText()), Integer.parseInt(dexterityNumber.getText()),
+                    Integer.parseInt(intelligenceNumber.getText()), Integer.parseInt(constitutionNumber.getText()),
+                    Integer.parseInt(speedNumber.getText()), Integer.parseInt(perceptionNumber.getText()));
+                    setAvatar(whichPlayer ? player1Pic : player2Pic, whichPlayer ? "./assets/staff1.png" : "./assets/staff2.png");
+        } else {
+            hero = new Thief(nameField.getText(), Integer.parseInt(strengthNumber.getText()), Integer.parseInt(dexterityNumber.getText()),
+                    Integer.parseInt(intelligenceNumber.getText()), Integer.parseInt(constitutionNumber.getText()),
+                    Integer.parseInt(speedNumber.getText()), Integer.parseInt(perceptionNumber.getText()));
+                    setAvatar(whichPlayer ? player1Pic : player2Pic, whichPlayer ? "./assets/bow1.png" : "./assets/bow2.png");
+        }
+        if(whichPlayer) {
+            HeroRPG.hero1 = hero;
+        } else {
+            HeroRPG.hero2 = hero;
+        }
+    }
+
+    private void resetFields() {
+        HeroRPG.spentAttributePoints = 0;
+        strengthNumber.setText("0");
+        dexterityNumber.setText("0");
+        intelligenceNumber.setText("0");
+        constitutionNumber.setText("0");
+        speedNumber.setText("0");
+        perceptionNumber.setText("0");
+        nameField.setText("");
+        unspentPoints.setText("Unspent attribute points: " + String.valueOf(40 - HeroRPG.spentAttributePoints));
+        whichPlayer.setText("Player 2's character creator");
+    }
+
+    private void prepareBattleScreen() {
+        HeroRPG.heroRPG.frame.setContentPane(HeroRPG.heroRPG.battle);
+        HeroRPG.heroRPG.frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        HeroRPG.heroRPG.frame.pack();
+        HeroRPG.heroRPG.frame.setVisible(true);
+        player1Name.setText(HeroRPG.hero1.getName());
+        player2Name.setText(HeroRPG.hero2.getName());
+        player1Health.setText(HeroRPG.hero1.getHealth() + " HP");
+        player2Health.setText(HeroRPG.hero2.getHealth() + " HP");
+        player1AP.setText(HeroRPG.hero1.getCurrentAP() + " AP");
+        player2AP.setText(HeroRPG.hero2.getCurrentAP() + " AP");
+    }
+
+    private void decideWhoStarts() {
+        if (HeroRPG.hero1.getOffensiveRating() >= HeroRPG.hero2.getOffensiveRating()) {
+            HeroRPG.player = HeroRPG.Player.PLAYER1;
+            whosTurn.setText(HeroRPG.hero1.getName() + "'s turn");
+        } else {
+            whosTurn.setText(HeroRPG.hero2.getName() + "'s turn");
+        }
+    }
+
     @Override
     public void actionPerformed(ActionEvent actionEvent) {
         if (HeroRPG.spentAttributePoints == 40 && !nameField.getText().equals("")) {
             if (HeroRPG.player == HeroRPG.Player.PLAYER1) {
-                if(warrior.isSelected()) {
-                    HeroRPG.hero1 = new Warrior(nameField.getText(), Integer.parseInt(strengthNumber.getText()), Integer.parseInt(dexterityNumber.getText()),
-                            Integer.parseInt(intelligenceNumber.getText()), Integer.parseInt(constitutionNumber.getText()),
-                            Integer.parseInt(speedNumber.getText()), Integer.parseInt(perceptionNumber.getText()));
-                    setAvatar(player1Pic, "./assets/sword1.png");
-                } else if(mage.isSelected()) {
-                    HeroRPG.hero1 = new Mage(nameField.getText(), Integer.parseInt(strengthNumber.getText()), Integer.parseInt(dexterityNumber.getText()),
-                            Integer.parseInt(intelligenceNumber.getText()), Integer.parseInt(constitutionNumber.getText()),
-                            Integer.parseInt(speedNumber.getText()), Integer.parseInt(perceptionNumber.getText()));
-                    setAvatar(player1Pic, "./assets/staff1.png");
-                } else {
-                    HeroRPG.hero1 = new Thief(nameField.getText(), Integer.parseInt(strengthNumber.getText()), Integer.parseInt(dexterityNumber.getText()),
-                            Integer.parseInt(intelligenceNumber.getText()), Integer.parseInt(constitutionNumber.getText()),
-                            Integer.parseInt(speedNumber.getText()), Integer.parseInt(perceptionNumber.getText()));
-                    setAvatar(player1Pic, "./assets/bow1.png");
-                }
-                storeStats(HeroRPG.hero1);
+                instantiateHero();
+                storeStats(HeroRPG.hero1, HeroRPG.hero1Stats);
                 HeroRPG.player = HeroRPG.Player.PLAYER2;
-                HeroRPG.spentAttributePoints = 0;
-                strengthNumber.setText("0");
-                dexterityNumber.setText("0");
-                intelligenceNumber.setText("0");
-                constitutionNumber.setText("0");
-                speedNumber.setText("0");
-                perceptionNumber.setText("0");
-                nameField.setText("");
-                unspentPoints.setText("Unspent attribute points: " + String.valueOf(40 - HeroRPG.spentAttributePoints));
-                whichPlayer.setText("Player 2's character creator");
+                resetFields();
             } else {
-                if(warrior.isSelected()) {
-                    HeroRPG.hero2 = new Warrior(nameField.getText(), Integer.parseInt(strengthNumber.getText()), Integer.parseInt(dexterityNumber.getText()),
-                            Integer.parseInt(intelligenceNumber.getText()), Integer.parseInt(constitutionNumber.getText()),
-                            Integer.parseInt(speedNumber.getText()), Integer.parseInt(perceptionNumber.getText()));
-                    setAvatar(player2Pic, "./assets/sword2.png");
-                } else if(mage.isSelected()) {
-                    HeroRPG.hero2 = new Mage(nameField.getText(), Integer.parseInt(strengthNumber.getText()), Integer.parseInt(dexterityNumber.getText()),
-                            Integer.parseInt(intelligenceNumber.getText()), Integer.parseInt(constitutionNumber.getText()),
-                            Integer.parseInt(speedNumber.getText()), Integer.parseInt(perceptionNumber.getText()));
-                    setAvatar(player2Pic, "./assets/staff2.png");
-                } else {
-                    HeroRPG.hero2 = new Thief(nameField.getText(), Integer.parseInt(strengthNumber.getText()), Integer.parseInt(dexterityNumber.getText()),
-                            Integer.parseInt(intelligenceNumber.getText()), Integer.parseInt(constitutionNumber.getText()),
-                            Integer.parseInt(speedNumber.getText()), Integer.parseInt(perceptionNumber.getText()));
-                    setAvatar(player2Pic, "./assets/bow2.png");
-                }
-                storeStats(HeroRPG.hero2);
-                HeroRPG.heroRPG.frame.setContentPane(HeroRPG.heroRPG.battle);
-                HeroRPG.heroRPG.frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-                HeroRPG.heroRPG.frame.pack();
-                HeroRPG.heroRPG.frame.setVisible(true);
-                player1Name.setText(HeroRPG.hero1.getName());
-                player2Name.setText(HeroRPG.hero2.getName());
-                player1Health.setText(HeroRPG.hero1.getHealth() + " HP");
-                player2Health.setText(HeroRPG.hero2.getHealth() + " HP");
-                player1AP.setText(HeroRPG.hero1.getCurrentAP() + " AP");
-                player2AP.setText(HeroRPG.hero2.getCurrentAP() + " AP");
-                // The player with the higher offensive rating starts the game
-                // If they are equal player1 gets to be first
-                if (HeroRPG.hero1.getOffensiveRating() >= HeroRPG.hero2.getOffensiveRating()) {
-                    HeroRPG.player = HeroRPG.Player.PLAYER1;
-                    whosTurn.setText(HeroRPG.hero1.getName() + "'s turn");
-                } else {
-                    whosTurn.setText(HeroRPG.hero2.getName() + "'s turn");
-                }
+                instantiateHero();
+                storeStats(HeroRPG.hero2, HeroRPG.hero2Stats);
+                prepareBattleScreen();
+                decideWhoStarts();
             }
         } else {
             JOptionPane.showMessageDialog(frame, "Your character is not ready to be created.");
